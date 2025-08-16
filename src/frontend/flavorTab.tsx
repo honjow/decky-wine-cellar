@@ -237,133 +237,23 @@ export default function FlavorTab({
             Not Installed
           </DialogControlsSectionHeader>
           <ul>
-            {flavor.releases.flatMap((release) => {
-              // For ProtonCachyOS, expand each release into separate asset entries
-              if (flavor.flavor === "ProtonCachyOS") {
-                const installableAssets = release.assets.filter(asset => 
-                  asset.name.endsWith('.tar.xz') && !asset.name.includes('.sha256')
-                );
-                
-                return installableAssets.map((asset) => {
-                  const assetName = asset.name.replace('.tar.xz', '');
-                  const isQueued =
-                    appState.task_queue
-                      .filter(
-                        (task) => task.type == TaskType.InstallCompatibilityTool,
-                      )
-                      .map((task) => task.install)
-                      .filter(
-                        (install) =>
-                          install != null && install.release.url == release.url,
-                      ).length == 1;
-                  const isInProgress = appState.in_progress !== null;
-                  const isItemInProgress =
-                    isInProgress && appState.in_progress?.name === assetName;
-                  
-                  return (
-                    <li
-                      key={asset.name.toString()}
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                        paddingBottom: "10px",
-                      }}
-                    >
-                      <span>
-                        {assetName}
-                        {isQueued && " (In Queue)"}
-                      </span>
-                      {isItemInProgress && (
-                        <div
-                          style={{
-                            marginLeft: "auto",
-                            paddingLeft: "10px",
-                            minWidth: "200px",
-                          }}
-                        >
-                          <ProgressBarWithInfo
-                            nProgress={appState.in_progress?.progress}
-                            indeterminate={
-                              appState.in_progress?.state ==
-                              QueueCompatibilityToolState.Extracting
-                            }
-                            sOperationText={appState.in_progress?.state}
-                            bottomSeparator="none"
-                          />
-                        </div>
-                      )}
-                      <Focusable
-                        style={{
-                          marginLeft: "auto",
-                          boxShadow: "none",
-                          display: "flex",
-                          justifyContent: "right",
-                        }}
-                      >
-                        <DialogButton
-                          style={{
-                            height: "40px",
-                            width: "40px",
-                            padding: "10px 12px",
-                            minWidth: "40px",
-                          }}
-                          onClick={(e: MouseEvent) =>
-                            showContextMenu(
-                              <Menu label="Runner Actions">
-                                <MenuItem
-                                  disabled={isItemInProgress || isQueued}
-                                  onSelected={() => {}}
-                                  onClick={() => {
-                                    handleInstall({...release, assets: [asset]});
-                                  }}
-                                >
-                                  Install
-                                </MenuItem>
-                                {(isItemInProgress || isQueued) && (
-                                  <MenuItem
-                                    onClick={() => {
-                                      handleCancel({...release, assets: [asset]});
-                                    }}
-                                  >
-                                    Cancel from Installation
-                                  </MenuItem>
-                                )}
-                                <MenuItem
-                                  onClick={() => {
-                                    handleViewChangeLog(release);
-                                  }}
-                                >
-                                  View Change Log
-                                </MenuItem>
-                              </Menu>,
-                              e.currentTarget ?? window,
-                            )
-                          }
-                        >
-                          <FaEllipsisH />
-                        </DialogButton>
-                      </Focusable>
-                    </li>
-                  );
-                });
-              } else {
-                // For other tools, use the original logic
-                const isQueued =
-                  appState.task_queue
-                    .filter(
-                      (task) => task.type == TaskType.InstallCompatibilityTool,
-                    )
-                    .map((task) => task.install)
-                    .filter(
-                      (install) =>
-                        install != null && install.release.url == release.url,
-                    ).length == 1;
-                const isInProgress = appState.in_progress !== null;
-                const isItemInProgress =
-                  isInProgress && appState.in_progress?.name === release.tag_name;
-                return [(
+            {flavor.releases.map((release) => {
+              const isQueued =
+                appState.task_queue
+                  .filter(
+                    (task) => task.type == TaskType.InstallCompatibilityTool,
+                  )
+                  .map((task) => task.install)
+                  .filter(
+                    (install) =>
+                      install != null && install.release.url == release.url,
+                  ).length == 1;
+              const isInProgress = appState.in_progress !== null;
+              const isItemInProgress =
+                isInProgress && appState.in_progress?.name === release.tag_name;
+              return (
                 <li
+                  key={release.tag_name.toString()}
                   style={{
                     display: "flex",
                     flexDirection: "row",
@@ -446,8 +336,7 @@ export default function FlavorTab({
                     </DialogButton>
                   </Focusable>
                 </li>
-                )];
-              }
+              );
             })}
           </ul>
         </DialogControlsSection>

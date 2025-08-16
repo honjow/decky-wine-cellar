@@ -169,7 +169,11 @@ impl WineCask {
                 let first = valid_directories.first().unwrap();
                 let new_compat_tool_vdf = first.join("compatibilitytool.vdf");
                 let new_path = match queue_compatibility_tool.flavor {
-                    CompatibilityToolFlavor::ProtonGE => first.clone(),
+                    CompatibilityToolFlavor::ProtonGE 
+                    | CompatibilityToolFlavor::ProtonCachyOS => {
+                        // ProtonCachyOS uses the same structure as ProtonGE
+                        first.clone()
+                    },
                     CompatibilityToolFlavor::SteamTinkerLaunch
                     | CompatibilityToolFlavor::Luxtorpeda
                     | CompatibilityToolFlavor::Boxtron => {
@@ -274,19 +278,20 @@ pub fn look_for_compressed_archive(install_request: &Install) -> Option<QueueCom
         }
     };
 
-    if let Some(asset) = install_request
+    // For ProtonCachyOS with asset selection, or general asset selection
+    let selected_asset = install_request
         .release
         .assets
-        .clone()
-        .into_iter()
-        .find(is_compressed)
-    {
+        .iter()
+        .find(|asset| is_compressed(asset));
+
+    if let Some(asset) = selected_asset {
         return Some(QueueCompatibilityTool {
             flavor: install_request.flavor.to_owned(),
             name: install_request.release.tag_name.to_owned(),
-            url: asset.clone().browser_download_url,
+            url: asset.browser_download_url.clone(),
             state: QueueCompatibilityToolState::Waiting,
-            compress_type: compress_type(&asset),
+            compress_type: compress_type(asset),
             progress: 0,
         });
     }

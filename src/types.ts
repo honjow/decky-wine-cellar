@@ -99,6 +99,7 @@ export enum UpdaterState {
 export enum CompatibilityToolFlavor {
   Unknown = "Unknown",
   ProtonGE = "ProtonGE",
+  ProtonCachyOS = "ProtonCachyOS",
   //SteamTinkerLaunch = "SteamTinkerLaunch",
   Luxtorpeda = "Luxtorpeda",
   Boxtron = "Boxtron",

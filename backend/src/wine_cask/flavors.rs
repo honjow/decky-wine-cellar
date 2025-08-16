@@ -11,6 +11,7 @@ use std::{env, fs};
 pub enum CompatibilityToolFlavor {
     Unknown,
     ProtonGE,
+    ProtonCachyOS,
     SteamTinkerLaunch,
     Luxtorpeda,
     Boxtron,
@@ -21,6 +22,7 @@ impl std::fmt::Display for CompatibilityToolFlavor {
         match self {
             CompatibilityToolFlavor::Unknown => write!(f, "Unknown"),
             CompatibilityToolFlavor::ProtonGE => write!(f, "ProtonGE"),
+            CompatibilityToolFlavor::ProtonCachyOS => write!(f, "ProtonCachyOS"),
             CompatibilityToolFlavor::SteamTinkerLaunch => write!(f, "SteamTinkerLaunch"),
             CompatibilityToolFlavor::Luxtorpeda => write!(f, "Luxtorpeda"),
             CompatibilityToolFlavor::Boxtron => write!(f, "Boxtron"),
@@ -69,6 +71,14 @@ impl WineCask {
                 renew_cache,
             )
             .await;
+        let proton_cachyos_flavor = self
+            .get_flavor(
+                CompatibilityToolFlavor::ProtonCachyOS,
+                "CachyOS",
+                "proton-cachyos",
+                renew_cache,
+            )
+            .await;
         /*let steam_tinker_launch_flavor = self
         .get_flavor(
             &installed_compatibility_tools,
@@ -96,6 +106,7 @@ impl WineCask {
             .await;
 
         flavors.push(proton_ge_flavor);
+        flavors.push(proton_cachyos_flavor);
         //flavors.push(steam_tinker_launch_flavor); fixme: we need to have a special installation process for this.
         flavors.push(luxtorpeda_flavor);
         flavors.push(boxtron_flavor);
@@ -136,6 +147,15 @@ impl WineCask {
                     if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonGE {
                         steam_compat_tool.internal_name == gh.tag_name
                             || steam_compat_tool.display_name == gh.tag_name
+                    } else if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonCachyOS {
+                        // For ProtonCachyOS, match against any asset filename (without .tar.xz)
+                        // This covers both standard and v3 variants
+                        gh.assets.iter().any(|asset| {
+                            asset.name.ends_with(".tar.xz") &&
+                            !asset.name.contains(".sha256") &&
+                            (steam_compat_tool.internal_name == asset.name.replace(".tar.xz", "") ||
+                             steam_compat_tool.display_name == asset.name.replace(".tar.xz", ""))
+                        })
                     } else {
                         steam_compat_tool.display_name
                             == compatibility_tool_flavor.to_string() + " " + &gh.tag_name
@@ -156,6 +176,15 @@ impl WineCask {
                     !installed_compatibility_tools.iter().any(|tool| {
                         if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonGE {
                             tool.internal_name == gh.tag_name || tool.display_name == gh.tag_name
+                        } else if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonCachyOS {
+                            // For ProtonCachyOS, check against any asset filename (without .tar.xz)
+                            // This covers both standard and v3 variants
+                            gh.assets.iter().any(|asset| {
+                                asset.name.ends_with(".tar.xz") &&
+                                !asset.name.contains(".sha256") &&
+                                (tool.internal_name == asset.name.replace(".tar.xz", "") ||
+                                 tool.display_name == asset.name.replace(".tar.xz", ""))
+                            })
                         } else {
                             tool.display_name
                                 == compatibility_tool_flavor.to_string() + " " + &gh.tag_name

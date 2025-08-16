@@ -74,20 +74,20 @@ jobs:
           mkdir -p ${PROJECT_NAME}
           # zip
           cp -r dist py_modules bin *.py *.json *.md *.js LICENSE ${PROJECT_NAME}
-          # zip -r ${PROJECT_NAME}.zip ${PROJECT_NAME}
-          mkdir build
-          cp -r ${PROJECT_NAME} build
+          zip -r ${PROJECT_NAME}.zip ${PROJECT_NAME}
+
 
       - name: show files
         run: |
-          ls -R build
+          ls -R ${PROJECT_NAME}
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.extract-project-name.outputs.project_name }}-${{ steps.extract-project-version.outputs.project_version }}
+          compression-level: 0
           path: |
-            build/
+            ${{ steps.extract-project-name.outputs.project_name }}.zip
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -100,7 +100,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /tmp/artifacts
-          uncompress: true
 
       - run: ls -R /tmp/artifacts
 
@@ -108,7 +107,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            /tmp/artifacts/*.zip
+            /tmp/artifacts/*/*.zip
           tag_name: ${{ github.ref_name }}
           draft: false
           generate_release_notes: true

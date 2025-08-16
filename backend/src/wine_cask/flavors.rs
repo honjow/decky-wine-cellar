@@ -11,6 +11,7 @@ use std::{env, fs};
 pub enum CompatibilityToolFlavor {
     Unknown,
     ProtonGE,
+    ProtonCachyOS,
     SteamTinkerLaunch,
     Luxtorpeda,
     Boxtron,
@@ -21,6 +22,7 @@ impl std::fmt::Display for CompatibilityToolFlavor {
         match self {
             CompatibilityToolFlavor::Unknown => write!(f, "Unknown"),
             CompatibilityToolFlavor::ProtonGE => write!(f, "ProtonGE"),
+            CompatibilityToolFlavor::ProtonCachyOS => write!(f, "ProtonCachyOS"),
             CompatibilityToolFlavor::SteamTinkerLaunch => write!(f, "SteamTinkerLaunch"),
             CompatibilityToolFlavor::Luxtorpeda => write!(f, "Luxtorpeda"),
             CompatibilityToolFlavor::Boxtron => write!(f, "Boxtron"),
@@ -69,6 +71,14 @@ impl WineCask {
                 renew_cache,
             )
             .await;
+        let proton_cachyos_flavor = self
+            .get_flavor(
+                CompatibilityToolFlavor::ProtonCachyOS,
+                "CachyOS",
+                "proton-cachyos",
+                renew_cache,
+            )
+            .await;
         /*let steam_tinker_launch_flavor = self
         .get_flavor(
             &installed_compatibility_tools,
@@ -96,6 +106,7 @@ impl WineCask {
             .await;
 
         flavors.push(proton_ge_flavor);
+        flavors.push(proton_cachyos_flavor);
         //flavors.push(steam_tinker_launch_flavor); fixme: we need to have a special installation process for this.
         flavors.push(luxtorpeda_flavor);
         flavors.push(boxtron_flavor);
@@ -111,9 +122,16 @@ impl WineCask {
         renew_cache: bool,
     ) -> Flavor {
         if let Some(github_releases) = self.get_releases(owner, repository, renew_cache).await {
+            let releases = if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonCachyOS {
+                // For ProtonCachyOS, expand each release into multiple single-asset releases
+                expand_proton_cachyos_releases(github_releases)
+            } else {
+                github_releases
+            };
+            
             Flavor {
                 flavor: compatibility_tool_flavor,
-                releases: github_releases,
+                releases,
             }
         } else {
             Flavor {
@@ -133,7 +151,9 @@ impl WineCask {
 
             for steam_compat_tool in &mut installed_compatibility_tools {
                 if let Some(release) = github_releases.iter().find(|gh| {
-                    if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonGE {
+                    if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonGE 
+                       || compatibility_tool_flavor == CompatibilityToolFlavor::ProtonCachyOS {
+                        // For both ProtonGE and ProtonCachyOS (now expanded), use tag_name matching
                         steam_compat_tool.internal_name == gh.tag_name
                             || steam_compat_tool.display_name == gh.tag_name
                     } else {
@@ -154,7 +174,9 @@ impl WineCask {
                 .iter()
                 .filter(|gh| {
                     !installed_compatibility_tools.iter().any(|tool| {
-                        if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonGE {
+                        if compatibility_tool_flavor == CompatibilityToolFlavor::ProtonGE 
+                           || compatibility_tool_flavor == CompatibilityToolFlavor::ProtonCachyOS {
+                            // For both ProtonGE and ProtonCachyOS (now expanded), use tag_name matching
                             tool.internal_name == gh.tag_name || tool.display_name == gh.tag_name
                         } else {
                             tool.display_name
@@ -259,4 +281,36 @@ impl WineCask {
 
         Some(github_releases)
     }
+}
+
+fn expand_proton_cachyos_releases(releases: Vec<Release>) -> Vec<Release> {
+    let mut expanded = Vec::new();
+    
+    for release in releases {
+        // Find all installable assets (tar.xz files, excluding checksums)
+        let installable_assets: Vec<&crate::github_util::Asset> = release
+            .assets
+            .iter()
+            .filter(|asset| {
+                asset.name.ends_with(".tar.xz") && !asset.name.contains(".sha256")
+            })
+            .collect();
+        
+        // Create a separate release for each asset
+        for asset in installable_assets {
+            let asset_name = asset.name.replace(".tar.xz", "");
+            let mut single_asset_release = release.clone();
+            
+            // Use the asset name as the tag_name for easier matching
+            single_asset_release.tag_name = asset_name.clone();
+            single_asset_release.name = asset_name;
+            
+            // Keep only this specific asset
+            single_asset_release.assets = vec![asset.clone()];
+            
+            expanded.push(single_asset_release);
+        }
+    }
+    
+    expanded
 }

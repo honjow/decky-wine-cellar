@@ -253,6 +253,7 @@ export default function FlavorTab({
                 isInProgress && appState.in_progress?.name === release.tag_name;
               return (
                 <li
+                  key={release.tag_name.toString()}
                   style={{
                     display: "flex",
                     flexDirection: "row",

@@ -1,5 +1,5 @@
 import { FC, useMemo, useEffect, useRef } from "react";
-import { Focusable, Navigation } from "@decky/ui";
+import { Navigation } from "@decky/ui";
 import MarkdownIt from "markdown-it";
 import taskLists from "markdown-it-task-lists";
 
@@ -45,16 +45,13 @@ export const Markdown: FC<MarkdownProps> = ({ children, onDismiss }) => {
   }, [onDismiss]);
 
   return (
-    // @ts-ignore
-    <Focusable>
-      <div 
-        ref={containerRef}
-        style={{ 
-          lineHeight: '1.5',
-          wordWrap: 'break-word'
-        }}
-        dangerouslySetInnerHTML={{ __html: htmlContent }} 
-      />
-    </Focusable>
+    <div 
+      ref={containerRef}
+      style={{ 
+        lineHeight: '1.5',
+        wordWrap: 'break-word'
+      }}
+      dangerouslySetInnerHTML={{ __html: htmlContent }} 
+    />
   );
 };

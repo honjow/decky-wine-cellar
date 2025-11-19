@@ -10,7 +10,9 @@ function ChangeLogModal({
   closeModal?: () => {};
 }) {
   return (
+    // @ts-ignore
     <Focusable onCancelButton={closeModal}>
+      {/* @ts-ignore */}
       <Focusable
         onActivate={() => {}}
         style={{
@@ -25,7 +27,7 @@ function ChangeLogModal({
         <div>
           <h1>{release.name}</h1>
           {release.body ? (
-            <Markdown>{`${release.body}`}</Markdown>
+            <Markdown children={String(release.body)} />
           ) : (
             "no patch notes for this version"
           )}

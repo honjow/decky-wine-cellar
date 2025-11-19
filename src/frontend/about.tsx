@@ -56,6 +56,7 @@ function SystemInformation({
   socket: WebSocket | undefined;
 }) {
   return (
+    // @ts-ignore
     <Focusable style={{ display: "flex", flexDirection: "column" }}>
       {appState != undefined && socket != undefined && (
         <Field
@@ -119,6 +120,7 @@ function ProjectInformation() {
   ];
 
   return (
+    // @ts-ignore
     <Focusable style={{ display: "flex", flexDirection: "column" }}>
       {socialLinks.map((linkInfo, index) => (
         //padding compact is broken lol
@@ -129,6 +131,7 @@ function ProjectInformation() {
           bottomSeparator={"none"}
           padding={"none"}
         >
+          {/* @ts-ignore */}
           <Focusable
             style={{
               marginLeft: "auto",

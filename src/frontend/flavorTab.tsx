@@ -152,6 +152,7 @@ export default function FlavorTab({
                       {steamCompatibilityTool.used_by_games.length != 0 &&
                         "(Used By Games)"}
                     </span>
+                    {/* @ts-ignore */}
                     <Focusable
                       style={{
                         marginLeft: "auto",
@@ -284,6 +285,7 @@ export default function FlavorTab({
                       />
                     </div>
                   )}
+                  {/* @ts-ignore */}
                   <Focusable
                     style={{
                       marginLeft: "auto",

@@ -98,6 +98,7 @@ export default function ManagerTab({
                     {steamCompatibilityTool.used_by_games.length != 0 &&
                       " (Used By Games)"}
                   </span>
+                  {/* @ts-ignore */}
                   <Focusable
                     style={{
                       marginLeft: "auto",
